@@ -3,7 +3,7 @@
 #
 # Commands:
 #   hubot new job "<crontab format>" <message> - Schedule a cron job to say something
-#   hubot new background job "<crontab format>" <event> <params_as_json> - Schedule a cron job to emit an event
+#   hubot new event job "<crontab format>" <event> <params_as_json> - Schedule a cron job to emit an event
 #   hubot list jobs - List current cron jobs
 #   hubot remove job <id> - remove job
 #
@@ -34,14 +34,14 @@ module.exports = (robot) ->
     for own id, job of robot.brain.data.cronjob
       registerNewJob robot, id, job[0], job[1], job[2]
 
-  robot.respond /(?:new|add) (background\s)?job "(.*?)" (.+?)(\s(.*))?$/i, (msg) ->
+  robot.respond /(?:new|add) (event\s)?job "(.*?)" (.+?)(\s(.*))?$/i, (msg) ->
     try
       type = "message"
       data = msg.match[3]
 
-      if (msg.match[1] || "").trim() == "background"
+      if msg.match[1]?.trim() == "event"
         type = "event"
-        data = event: msg.match[3].trim(), payload: msg.match[5].trim()
+        data = event: msg.match[3].trim(), payload: msg.match[5]?.trim()
 
       id = createNewJob robot, msg.match[2], msg.message.user, data, type
       msg.send "Job #{type} #{id} created"

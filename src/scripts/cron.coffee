@@ -23,7 +23,7 @@ createNewJob = (robot, pattern, user, payload, type = "message") ->
   robot.brain.data.cronjob[id] = job.serialize()
   id
 
-registerNewJob = (robot, id, pattern, user, payload, type) ->
+registerNewJob = (robot, id, pattern, user, payload, type = "message") ->
   JOBS[id] = new Job(id, pattern, user, payload, type)
   JOBS[id].start(robot)
   JOBS[id]
@@ -32,25 +32,29 @@ module.exports = (robot) ->
   robot.brain.on 'loaded', =>
     robot.brain.data.cronjob or= {}
     for own id, job of robot.brain.data.cronjob
-      registerNewJob robot, id, job[0], job[1], job[2]
+      robot.logger.debug "Job #{job[3]} #{id}: \"#{job[0]}\" on #{job[1].flow} #{JSON.stringify(job[2])}"
+      registerNewJob(robot, id, job[0], job[1], job[2], job[3])
 
-  robot.respond /(?:new|add) (event\s)?job "(.*?)" (.+?)(\s(.*))?$/i, (msg) ->
+  robot.respond /(?:new|add) event "(.*?)" (.+?)(\s(.*))?$/i, (msg) ->
     try
-      type = "message"
-      data = msg.match[3]
+      data = event: msg.match[2].trim(), payload: msg.match[4]?.trim()
+      user = msg.message.user
+      id = createNewJob robot, msg.match[1], user, data, "event"
+      msg.send "Event job #{id} created to #{user?.flow}"
+    catch error
+      msg.send "Error caught parsing crontab pattern: #{error}. See http://crontab.org/ for the syntax"
 
-      if msg.match[1]?.trim() == "event"
-        type = "event"
-        data = event: msg.match[3].trim(), payload: msg.match[5]?.trim()
-
-      id = createNewJob robot, msg.match[2], msg.message.user, data, type
-      msg.send "Job #{type} #{id} created"
+  robot.respond /(?:new|add) job "(.*?)" (.*?)$/i, (msg) ->
+    try
+      user = msg.message.user
+      id = createNewJob robot, msg.match[1], user, msg.match[2], "message"
+      msg.send "Job #{id} created to #{user?.flow}"
     catch error
       msg.send "Error caught parsing crontab pattern: #{error}. See http://crontab.org/ for the syntax"
 
   robot.respond /(?:list|ls) jobs?/i, (msg) ->
     for own id, job of robot.brain.data.cronjob
-      msg.send "#{id}: #{job[0]} @#{job[1].room} \"#{JSON.stringify(job[2])}\""
+      msg.send "Job #{id}: \"#{job[0]}\" on #{job[1].flow} \"#{JSON.stringify(job[2])}\""
 
   robot.respond /(?:rm|remove|del|delete) job (\d+)/i, (msg) ->
     id = msg.match[1]
@@ -71,10 +75,10 @@ class Job
 
   start: (robot) ->
     @cronjob = new cronJob(@pattern, =>
-      if @type == "message"
-        @sendMessage robot
-      else
+      if @type == "event"
         @sendEvent robot
+      else
+        @sendMessage robot
     )
     @cronjob.start()
 
@@ -82,7 +86,7 @@ class Job
     @cronjob.stop()
 
   serialize: ->
-    [@pattern, @user, @data]
+    [@pattern, @user, @data, @type]
 
   sendMessage: (robot) ->
     robot.send @user, @data

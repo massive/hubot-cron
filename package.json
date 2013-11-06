@@ -1,8 +1,8 @@
 {
-  "author": "Tatsuhiko Miyagawa",
+  "contributors": ["Tatsuhiko Miyagawa", "Matias Käkelä"],
   "name": "hubot-cron",
-  "version": "0.2.1",
-  "description": "Cron job messaging for hubot",
+  "version": "0.2.2",
+  "description": "Cron job messaging for hubot and Flowdock",
   "homepage": "https://github.com/massive/hubot-cron",
   "main": "./src/index.coffee",
   "repository": {

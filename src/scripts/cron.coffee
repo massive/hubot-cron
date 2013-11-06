@@ -2,8 +2,8 @@
 #   register cron jobs to schedule messages on the current channel
 #
 # Commands:
-#   hubot new job "<crontab format>" <message> - Schedule a cron job to say something
-#   hubot new event job "<crontab format>" <event> <params_as_json> - Schedule a cron job to emit an event
+#   hubot add job "<crontab format>" <message> - Schedule a cron job to say something
+#   hubot add event "<crontab format>" <event> <params_as_json> - Schedule a cron job to emit an event
 #   hubot list jobs - List current cron jobs
 #   hubot remove job <id> - remove job
 #

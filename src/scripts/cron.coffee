@@ -32,7 +32,8 @@ module.exports = (robot) ->
   robot.brain.on 'loaded', =>
     robot.brain.data.cronjob or= {}
     for own id, job of robot.brain.data.cronjob
-      robot.logger.debug "Job #{job[3]} #{id}: \"#{job[0]}\" on #{job[1].flow} #{JSON.stringify(job[2])}"
+      continue if JOBS[id]
+      robot.logger.info "Job #{job[3]} #{id}: \"#{job[0]}\" on #{job[1].flow} #{JSON.stringify(job[2])}"
       registerNewJob(robot, id, job[0], job[1], job[2], job[3])
 
   robot.respond /(?:new|add) event "(.*?)" (.+?)(\s(.*))?$/i, (msg) ->
@@ -93,4 +94,3 @@ class Job
 
   sendEvent: (robot) ->
     robot.emit @data.event, @data.payload
-

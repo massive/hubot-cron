@@ -8,27 +8,31 @@
 #   hubot remove job <id> - remove job
 #
 # Author:
-#   miyagawa
+#   miyagawa, massive
 
 cronJob = require('cron').CronJob
 
 JOBS = {}
 _ = require('lodash')
+uuid = require('node-uuid')
 
 createNewJob = (robot, pattern, user, payload, type = "message") ->
-  id = Math.floor(Math.random() * 1000000) while !id? || JOBS[id]
+  id = uuid.v4()
   if type == "message" || type == "event"
     job = registerNewJob robot, id, pattern, user, payload, type
   else
     robot.send "Invalid job type #{type}"
+
   robot.brain.data.cronjob[id] = job.serialize()
   id
 
 registerNewJob = (robot, id, pattern, user, payload, type = "message") ->
-  JOBS[id] = new Job(id, pattern, user, payload, type)
+  clone = _.cloneDeep(user)
+  id = id.toString()
+  JOBS[id] = new Job(id, pattern, clone, payload, type)
 
-  flow = user?.flow
-  flow_name = _.result(_.findWhere(robot.adapter.flows, { 'id': flow }), 'name');
+  flow = clone?.flow
+  flow_name = _.result(_.findWhere(robot.adapter.flows, { 'id' : flow }), 'name');
   robot.logger.info "Job #{type} #{id}: \"#{pattern}\" started on #{flow_name} #{JSON.stringify(payload)}"
 
   JOBS[id].start(robot)
@@ -51,7 +55,7 @@ module.exports = (robot) ->
       id = createNewJob robot, msg.match[1], user, data, "event"
 
       flow = user?.flow
-      flow_name = _.result(_.findWhere(robot.adapter.flows, { 'id': flow }), 'name');
+      flow_name = _.result(_.findWhere(robot.adapter.flows, { 'id' : flow }), 'name');
 
       msg.send "Event job #{id} created to #{flow_name}"
     catch error
@@ -70,11 +74,11 @@ module.exports = (robot) ->
 
   robot.respond /(?:list|ls) jobs?/i, (msg) ->
     for own id, job of robot.brain.data.cronjob
-      flow_name = _.result(_.findWhere(robot.adapter.flows, { 'id': job[1].flow }), 'name');
-      msg.send "Job #{id}: \"#{job[0]}\" on #{flow_name} \"#{JSON.stringify(job[2])}\""
+      flowName = _.result(_.findWhere(robot.adapter.flows, { 'id': job[1].flow }), 'name');
+      msg.send "Job #{id}: \"#{job[0]}\" on #{flowName} \"#{JSON.stringify(job[2])}\""
 
-  robot.respond /(?:rm|remove|del|delete) job (\d+)/i, (msg) ->
-    id = parseInt(msg.match[1], 10)
+  robot.respond /(?:rm|remove|del|delete) job (.+)/i, (msg) ->
+    id = msg.match[1]
     user = msg.message.user
     if JOBS[id]
       flow = JOBS[id].user?.flow

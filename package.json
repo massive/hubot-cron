@@ -1,5 +1,8 @@
 {
-  "contributors": ["Tatsuhiko Miyagawa", "Matias Käkelä"],
+  "contributors": [
+    "Tatsuhiko Miyagawa",
+    "Matias Käkelä"
+  ],
   "name": "hubot-cron",
   "version": "0.2.5",
   "description": "Cron job messaging for hubot and Flowdock",
@@ -17,6 +20,7 @@
   "dependencies": {
     "coffee-script": ">= 1.1.0",
     "cron": ">= 1.0.1",
-    "lodash": "2.2.1"
+    "lodash": "2.2.1",
+    "node-uuid": "^1.4.3"
   }
 }
